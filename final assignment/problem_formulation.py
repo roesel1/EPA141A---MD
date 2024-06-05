@@ -268,7 +268,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
         ]
 
     # Disaggregate over locations:
-    elif problem_formulation_id == 3:
+    if problem_formulation_id == 3:
         outcomes = []
 
         for dike in function.dikelist:
