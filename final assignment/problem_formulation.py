@@ -294,6 +294,15 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 )
             )
 
+            outcomes.append(
+                ScalarOutcome(
+                    f"{dike}_Expected Annual Damage",
+                    variable_name=f"{dike}_Expected Annual Damage",
+                    function=sum_over,
+                    kind=direction,
+                )
+            )
+
         outcomes.append(
             ScalarOutcome(
                 "RfR Total Costs",
