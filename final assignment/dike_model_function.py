@@ -179,7 +179,7 @@ class DikeNetwork:
         for s in self.planning_steps:
             for Qpeak in Qpeaks:
                 node = G.nodes["A.0"]
-                print(node)
+                # print(node)
                 waveshape_id = node["ID flood wave shape"]
 
                 time = np.arange(
