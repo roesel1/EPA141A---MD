@@ -118,3 +118,50 @@ def create_scenario(
 #
 # PRIM_overlap_scenario = create_scenario(para_list)
 
+#%%
+# import multirange as mr
+#
+# df_param_space_A5 = pd.read_csv('data/para_space_A5.csv').drop(0).rename(columns={"Unnamed: 0": "Variable"})
+# df_param_space_all = pd.read_csv('data/para_space_all.csv') .drop(0).rename(columns={"Unnamed: 0": "Variable"})
+#
+# dike_model, planning_steps = get_model_for_problem_formulation(3)
+#
+# def create_scenario_from_box(all, a5 ):
+#     para_list = []
+#     for uncertainty in dike_model.uncertainties:
+#         # print((variable in df_param_space_A5.Variable))
+#         variable = uncertainty.name
+#         # print(variable)
+#         if (variable in list(df_param_space_A5.Variable)) & (variable in list(df_param_space_all.Variable)) & (all + a5 ==2) :
+#             min_1 = float(df_param_space_A5[df_param_space_A5['Variable'] ==variable][df_param_space_A5.columns[1]].values[0])*10000
+#             max_1 =float(df_param_space_A5[df_param_space_A5['Variable'] ==variable][df_param_space_A5.columns[2]].values[0])*10000
+#
+#             min_2 = float(df_param_space_all[df_param_space_all['Variable'] ==variable][df_param_space_all.columns[1]].values[0]) *10000
+#             max_2 =float(df_param_space_all[df_param_space_all['Variable'] ==variable][df_param_space_all.columns[2]].values[0]) *10000
+#
+#             boundaries = mr.overlap(range(int(min_1),int(max_1)),range(int(min_2),int(max_2)))
+#             para_list.append((boundaries.start + (boundaries.stop - boundaries.start)/2)/10000)
+#             print((boundaries.start + (boundaries.stop - boundaries.start)/2)/10000)
+#         elif (variable in list(df_param_space_A5.Variable)) & (a5 == True):
+#             min_1 = float(df_param_space_A5[df_param_space_A5['Variable'] ==variable][df_param_space_A5.columns[1]].values[0])
+#             max_1 =float(df_param_space_A5[df_param_space_A5['Variable'] ==variable][df_param_space_A5.columns[2]].values[0])
+#
+#             para_list.append((min_1 + (max_1 - min_1)/2))
+#         elif (variable in list(df_param_space_all.Variable)) & (all == True):
+#             min_2 = float(df_param_space_all[df_param_space_all['Variable'] ==variable][df_param_space_all.columns[1]].values[0])
+#             max_2 =float(df_param_space_all[df_param_space_all['Variable'] ==variable][df_param_space_all.columns[2]].values[0])
+#
+#             para_list.append((min_2 + (max_2 - min_2)/2))
+#         elif variable.startswith("d"):
+#             para_list.append(3.5)
+#         elif variable == "A.0_ID flood wave shape":
+#             para_list.append(17)
+#         elif variable.endswith("Brate"):
+#             para_list.append(1.5)
+#         else:
+#             para_list.append((uncertainty.lower_bound + (uncertainty.upper_bound - uncertainty.lower_bound)/2))
+#
+#     return create_scenario(para_list)
+#
+#
+# Scenarios_MOEA = [create_scenario_from_box(all=True,a5=True),create_scenario_from_box(all=True,a5=False),create_scenario_from_box(all=False,a5=True)]
