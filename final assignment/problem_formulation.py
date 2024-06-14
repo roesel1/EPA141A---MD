@@ -164,12 +164,14 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 variable_name=[var for var in cost_variables],
                 function=sum_over,
                 kind=direction,
+
             ),
             ScalarOutcome(
                 "Expected Number of Deaths",
                 variable_name=[var for var in casualty_variables],
                 function=sum_over,
                 kind=direction,
+
             ),
         ]
 
@@ -282,6 +284,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
                     variable_name=[var for var in cost_variables],
                     function=sum_over,
                     kind=direction,
+                    # expected_range=(0, 1000000000)
                 )
             )
 
@@ -291,6 +294,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
                     variable_name=f"{dike}_Expected Number of Deaths",
                     function=sum_over,
                     kind=direction,
+                    # expected_range=(0, 1000000000)
                 )
             )
 
@@ -300,6 +304,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
                     variable_name=f"{dike}_Expected Annual Damage",
                     function=sum_over,
                     kind=direction,
+                    # expected_range=(0, 1000000000)
                 )
             )
 
@@ -309,6 +314,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 variable_name="RfR Total Costs",
                 function=sum_over,
                 kind=direction,
+                # expected_range=(0, 1000000000)
             )
         )
         outcomes.append(
@@ -317,6 +323,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 variable_name="Expected Evacuation Costs",
                 function=sum_over,
                 kind=direction,
+                # expected_range=(0, 1000000000)
             )
         )
 
