@@ -386,6 +386,72 @@ def get_model_for_problem_formulation(problem_formulation_id):
         outcomes.append(ArrayOutcome("Expected Evacuation Costs"))
         dike_model.outcomes = outcomes
 
+
+
+
+
+    #Custom problem formulation
+    elif problem_formulation_id == 6:
+        outcomes = []
+
+        for dike in function.dikelist:
+            if dike == 'A.5':
+
+                outcomes.append(
+                    ScalarOutcome(
+                        f"{dike}_Expected Number of Deaths",
+                        variable_name=f"{dike}_Expected Number of Deaths",
+                        function=sum_over,
+                        kind=direction,
+                        # expected_range=(0, 1000000000)
+                    )
+                )
+
+                outcomes.append(
+                    ScalarOutcome(
+                        f"{dike}_Expected Annual Damage",
+                        variable_name=f"{dike}_Expected Annual Damage",
+                        function=sum_over,
+                        kind=direction,
+                        # expected_range=(0, 1000000000)
+                    )
+                )
+
+
+        outcomes.append(
+            ScalarOutcome(
+                "Expected Evacuation Costs",
+                variable_name="Expected Evacuation Costs",
+                function=sum_over,
+                kind=direction,
+                # expected_range=(0, 1000000000)
+            )
+        )
+
+        damage_variables = []
+        casualty_variables = []
+
+        damage_variables.extend(
+            [f"{dike}_Expected Annual Damage" for dike in function.dikelist]
+        )
+
+        casualty_variables.extend(
+            [f"{dike}_Expected Number of Deaths" for dike in function.dikelist]
+        )
+
+        outcomes.append(ScalarOutcome(
+                "Expected Annual Damage",
+                variable_name=[var for var in damage_variables],
+                function=sum_over,
+                kind=direction))
+        outcomes.append(ScalarOutcome(
+                "Expected Number of Deaths",
+                variable_name=[var for var in casualty_variables],
+                function=sum_over,
+                kind=direction))
+
+        dike_model.outcomes = outcomes
+
     else:
         raise TypeError("unknown identifier")
 
