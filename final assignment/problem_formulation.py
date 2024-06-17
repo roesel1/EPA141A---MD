@@ -430,6 +430,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
 
         damage_variables = []
         casualty_variables = []
+        cost_variables = []
 
         damage_variables.extend(
             [f"{dike}_Expected Annual Damage" for dike in function.dikelist]
@@ -439,11 +440,22 @@ def get_model_for_problem_formulation(problem_formulation_id):
             [f"{dike}_Expected Number of Deaths" for dike in function.dikelist]
         )
 
+        cost_variables.extend(
+            [f"{dike}_Dike Investment Costs" for dike in function.dikelist]
+            + [f"RfR Total Costs"]
+            + [f"Expected Evacuation Costs"]
+        )
+
         outcomes.append(ScalarOutcome(
                 "Expected Annual Damage",
                 variable_name=[var for var in damage_variables],
                 function=sum_over,
                 kind=direction))
+        outcomes.append(ScalarOutcome(
+            "Total Investment Costs",
+            variable_name=[var for var in cost_variables],
+            function=sum_over,
+            kind=direction))
         outcomes.append(ScalarOutcome(
                 "Expected Number of Deaths",
                 variable_name=[var for var in casualty_variables],
