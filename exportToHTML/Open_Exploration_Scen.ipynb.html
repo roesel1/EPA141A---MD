@@ -1,0 +1,375 @@
+<html>
+<head>
+<title>Open_Exploration_Scen.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Open_Exploration_Scen.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% md 
+</span><span class="s1">## Used packages 
+</span><span class="s0">#%% 
+</span><span class="s2">import </span><span class="s1">numpy </span><span class="s2">as </span><span class="s1">np</span>
+<span class="s2">import </span><span class="s1">scipy </span><span class="s2">as </span><span class="s1">sp</span>
+<span class="s2">import </span><span class="s1">pandas </span><span class="s2">as </span><span class="s1">pd</span>
+<span class="s2">import </span><span class="s1">matplotlib</span><span class="s3">.</span><span class="s1">pyplot </span><span class="s2">as </span><span class="s1">plt</span>
+<span class="s2">import </span><span class="s1">seaborn </span><span class="s2">as </span><span class="s1">sns</span>
+<span class="s2">import </span><span class="s1">networkx </span><span class="s2">as </span><span class="s1">nx</span>
+<span class="s2">from </span><span class="s1">SALib</span><span class="s3">.</span><span class="s1">analyze </span><span class="s2">import </span><span class="s1">sobol</span>
+<span class="s2">import </span><span class="s1">warnings</span>
+<span class="s2">from </span><span class="s1">ema_workbench</span><span class="s3">.</span><span class="s1">analysis </span><span class="s2">import </span><span class="s1">feature_scoring</span>
+<span class="s2">from </span><span class="s1">ema_workbench</span><span class="s3">.</span><span class="s1">em_framework</span><span class="s3">.</span><span class="s1">salib_samplers </span><span class="s2">import </span><span class="s1">get_SALib_problem</span>
+<span class="s2">from </span><span class="s1">ema_workbench </span><span class="s2">import </span><span class="s3">(</span>
+    <span class="s1">Model</span><span class="s3">,</span>
+    <span class="s1">Policy</span><span class="s3">,</span>
+    <span class="s1">ema_logging</span><span class="s3">,</span>
+    <span class="s1">SequentialEvaluator</span><span class="s3">,</span>
+    <span class="s1">MultiprocessingEvaluator</span><span class="s3">,</span>
+    <span class="s1">perform_experiments</span><span class="s3">,</span>
+    <span class="s1">Samplers</span><span class="s3">,</span>
+    <span class="s1">SequentialEvaluator</span><span class="s3">,</span>
+<span class="s3">)</span>
+<span class="s2">from </span><span class="s1">dike_model_function </span><span class="s2">import </span><span class="s1">DikeNetwork </span>
+<span class="s2">from </span><span class="s1">problem_formulation </span><span class="s2">import </span><span class="s1">get_model_for_problem_formulation</span><span class="s3">, </span><span class="s1">sum_over</span><span class="s3">, </span><span class="s1">sum_over_time</span>
+<span class="s2">from </span><span class="s1">ema_workbench</span><span class="s3">.</span><span class="s1">analysis </span><span class="s2">import </span><span class="s1">prim</span>
+<span class="s2">from </span><span class="s1">ema_workbench</span><span class="s3">.</span><span class="s1">em_framework</span><span class="s3">.</span><span class="s1">parameters </span><span class="s2">import </span><span class="s1">Constant</span>
+
+<span class="s1">warnings</span><span class="s3">.</span><span class="s1">filterwarnings</span><span class="s3">(</span><span class="s4">&quot;ignore&quot;</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Creating samples LHC  
+</span><span class="s0">#%% 
+# Create an instance of the model which is usable with the EMA workbench</span>
+<span class="s1">dike_model</span><span class="s3">, </span><span class="s1">planning_steps </span><span class="s3">= </span><span class="s1">get_model_for_problem_formulation</span><span class="s3">(</span><span class="s5">3</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s1">zero_policy </span><span class="s3">= {</span><span class="s4">&quot;DaysToThreat&quot;</span><span class="s3">: </span><span class="s5">0</span><span class="s3">}</span>
+<span class="s1">zero_policy</span><span class="s3">.</span><span class="s1">update</span><span class="s3">({</span><span class="s4">f&quot;DikeIncrease </span><span class="s2">{</span><span class="s1">n</span><span class="s2">}</span><span class="s4">&quot;</span><span class="s3">: </span><span class="s5">0 </span><span class="s2">for </span><span class="s1">n </span><span class="s2">in </span><span class="s1">planning_steps</span><span class="s3">})</span>
+<span class="s1">zero_policy</span><span class="s3">.</span><span class="s1">update</span><span class="s3">({</span><span class="s4">f&quot;RfR </span><span class="s2">{</span><span class="s1">n</span><span class="s2">}</span><span class="s4">&quot;</span><span class="s3">: </span><span class="s5">0 </span><span class="s2">for </span><span class="s1">n </span><span class="s2">in </span><span class="s1">planning_steps</span><span class="s3">})</span>
+
+<span class="s1">pol0 </span><span class="s3">= {}</span>
+
+<span class="s2">for </span><span class="s1">key </span><span class="s2">in </span><span class="s1">dike_model</span><span class="s3">.</span><span class="s1">levers</span><span class="s3">:</span>
+    <span class="s1">s1</span><span class="s3">, </span><span class="s1">s2 </span><span class="s3">= </span><span class="s1">key</span><span class="s3">.</span><span class="s1">name</span><span class="s3">.</span><span class="s1">split</span><span class="s3">(</span><span class="s4">&quot;_&quot;</span><span class="s3">)</span>
+    <span class="s1">pol0</span><span class="s3">.</span><span class="s1">update</span><span class="s3">({</span><span class="s1">key</span><span class="s3">.</span><span class="s1">name</span><span class="s3">: </span><span class="s1">zero_policy</span><span class="s3">[</span><span class="s1">s2</span><span class="s3">]})</span>
+
+<span class="s1">policy0 </span><span class="s3">= </span><span class="s1">Policy</span><span class="s3">(</span><span class="s4">&quot;Policy 0&quot;</span><span class="s3">, **</span><span class="s1">pol0</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s2">with </span><span class="s1">MultiprocessingEvaluator</span><span class="s3">(</span><span class="s1">dike_model</span><span class="s3">) </span><span class="s2">as </span><span class="s1">evaluator</span><span class="s3">:</span>
+    <span class="s1">results </span><span class="s3">= </span><span class="s1">evaluator</span><span class="s3">.</span><span class="s1">perform_experiments</span><span class="s3">(</span><span class="s1">scenarios</span><span class="s3">=</span><span class="s5">2000</span><span class="s3">,</span><span class="s1">policies</span><span class="s3">=</span><span class="s5">10</span><span class="s3">,</span><span class="s1">uncertainty_sampling</span><span class="s3">=</span><span class="s1">Samplers</span><span class="s3">.</span><span class="s1">LHS</span><span class="s3">)</span>
+
+<span class="s1">experiments</span><span class="s3">, </span><span class="s1">outcomes </span><span class="s3">= </span><span class="s1">results</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Preprocess data samples LHC  
+</span><span class="s0">#%% 
+</span><span class="s1">experiments_unc </span><span class="s3">=</span><span class="s1">experiments</span><span class="s3">.</span><span class="s1">iloc</span><span class="s3">[:,</span><span class="s5">0</span><span class="s3">:</span><span class="s5">19</span><span class="s3">]</span>
+<span class="s1">df </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">outcomes</span><span class="s3">) </span>
+<span class="s0">#%% 
+</span><span class="s1">df</span>
+<span class="s0">#%% 
+</span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.1_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.2_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.3_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.4_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Annual Damage&quot;</span><span class="s3">]</span>
+<span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.1_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.2_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.3_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.4_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">]</span>
+<span class="s0">#%% 
+</span><span class="s1">df_feature_importance_out </span><span class="s3">= </span><span class="s1">df</span><span class="s3">[[</span><span class="s4">&quot;Expected Evacuation Costs&quot;</span><span class="s3">,</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">, </span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">,</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">,</span><span class="s4">&quot;A.5_Expected Annual Damage&quot;</span><span class="s3">,</span><span class="s4">&quot;Expected Evacuation Costs&quot;</span><span class="s3">]]</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Feature importance 
+</span><span class="s0">#%% md 
+</span>
+<span class="s0">#%% 
+</span><span class="s1">x </span><span class="s3">= </span><span class="s1">experiments_unc</span>
+<span class="s1">y </span><span class="s3">= </span><span class="s1">df_feature_importance_out</span>
+
+<span class="s1">fs </span><span class="s3">= </span><span class="s1">feature_scoring</span><span class="s3">.</span><span class="s1">get_feature_scores_all</span><span class="s3">(</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">,)</span>
+<span class="s1">sns</span><span class="s3">.</span><span class="s1">heatmap</span><span class="s3">(</span><span class="s1">fs</span><span class="s3">, </span><span class="s1">cmap</span><span class="s3">=</span><span class="s4">&quot;viridis&quot;</span><span class="s3">, </span><span class="s1">annot</span><span class="s3">=</span><span class="s2">True</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s2">from </span><span class="s1">ema_workbench</span><span class="s3">.</span><span class="s1">analysis </span><span class="s2">import </span><span class="s1">RuleInductionType</span>
+
+
+<span class="s1">y </span><span class="s3">= (</span>
+    <span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">]))[</span><span class="s1">np</span><span class="s3">.</span><span class="s1">int64</span><span class="s3">(</span><span class="s5">0.80</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">]))])</span>
+    <span class="s3">|</span>
+    <span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'A.5_Expected Annual Damage'</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'A.5_Expected Annual Damage'</span><span class="s3">]))[</span><span class="s1">np</span><span class="s3">.</span><span class="s1">int64</span><span class="s3">(</span><span class="s5">0.8</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'A.5_Expected Annual Damage'</span><span class="s3">]))])</span>
+     <span class="s3">)</span>
+
+<span class="s1">fs</span><span class="s3">, </span><span class="s1">alg </span><span class="s3">= </span><span class="s1">feature_scoring</span><span class="s3">.</span><span class="s1">get_ex_feature_scores</span><span class="s3">(</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">mode</span><span class="s3">=</span><span class="s1">RuleInductionType</span><span class="s3">.</span><span class="s1">CLASSIFICATION</span><span class="s3">)</span>
+<span class="s1">fs</span><span class="s3">.</span><span class="s1">sort_values</span><span class="s3">(</span><span class="s1">ascending</span><span class="s3">=</span><span class="s2">False</span><span class="s3">, </span><span class="s1">by</span><span class="s3">=</span><span class="s5">1</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s2">from </span><span class="s1">ema_workbench</span><span class="s3">.</span><span class="s1">analysis </span><span class="s2">import </span><span class="s1">RuleInductionType</span>
+
+
+<span class="s1">y </span><span class="s3">= (</span>
+    <span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'Expected Number of Deaths'</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">]))[</span><span class="s1">int</span><span class="s3">(</span><span class="s5">0.8</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'Expected Number of Deaths'</span><span class="s3">]))])</span>
+    <span class="s3">|(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'Expected Annual Damage'</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">]))[</span><span class="s1">int</span><span class="s3">(</span><span class="s5">0.8</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'Expected Annual Damage'</span><span class="s3">]))])</span>
+     <span class="s3">)</span>
+
+<span class="s1">fs</span><span class="s3">, </span><span class="s1">alg </span><span class="s3">= </span><span class="s1">feature_scoring</span><span class="s3">.</span><span class="s1">get_ex_feature_scores</span><span class="s3">(</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">mode</span><span class="s3">=</span><span class="s1">RuleInductionType</span><span class="s3">.</span><span class="s1">CLASSIFICATION</span><span class="s3">)</span>
+<span class="s1">fs</span><span class="s3">.</span><span class="s1">sort_values</span><span class="s3">(</span><span class="s1">ascending</span><span class="s3">=</span><span class="s2">False</span><span class="s3">, </span><span class="s1">by</span><span class="s3">=</span><span class="s5">1</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s2">from </span><span class="s1">ema_workbench</span><span class="s3">.</span><span class="s1">analysis </span><span class="s2">import </span><span class="s1">RuleInductionType</span>
+
+
+<span class="s1">y </span><span class="s3">= (</span>
+    <span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;Expected Evacuation Costs&quot;</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;Expected Evacuation Costs&quot;</span><span class="s3">]))[</span><span class="s1">np</span><span class="s3">.</span><span class="s1">int64</span><span class="s3">(</span><span class="s5">0.80</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;Expected Evacuation Costs&quot;</span><span class="s3">]))])</span>
+     <span class="s3">)</span>
+
+<span class="s1">fs</span><span class="s3">, </span><span class="s1">alg </span><span class="s3">= </span><span class="s1">feature_scoring</span><span class="s3">.</span><span class="s1">get_ex_feature_scores</span><span class="s3">(</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">mode</span><span class="s3">=</span><span class="s1">RuleInductionType</span><span class="s3">.</span><span class="s1">CLASSIFICATION</span><span class="s3">)</span>
+<span class="s1">fs</span><span class="s3">.</span><span class="s1">sort_values</span><span class="s3">(</span><span class="s1">ascending</span><span class="s3">=</span><span class="s2">False</span><span class="s3">, </span><span class="s1">by</span><span class="s3">=</span><span class="s5">1</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Filter important uncertainties and create samples SOBOL  
+</span><span class="s0">#%% 
+</span><span class="s1">dike_model_1</span><span class="s3">, </span><span class="s1">planning_steps </span><span class="s3">= </span><span class="s1">get_model_for_problem_formulation</span><span class="s3">(</span><span class="s5">3</span><span class="s3">)</span>
+<span class="s0"># </span>
+<span class="s0"># zero_policy = {&quot;DaysToThreat&quot;: 0}</span>
+<span class="s0"># zero_policy.update({f&quot;DikeIncrease {n}&quot;: 0 for n in planning_steps})</span>
+<span class="s0"># zero_policy.update({f&quot;RfR {n}&quot;: 0 for n in planning_steps})</span>
+<span class="s0"># </span>
+<span class="s0"># pol0 = {}</span>
+<span class="s0"># </span>
+<span class="s0"># for key in dike_model_1.levers:</span>
+<span class="s0">#     s1, s2 = key.name.split(&quot;_&quot;)</span>
+<span class="s0">#     pol0.update({key.name: zero_policy[s2]})</span>
+<span class="s0"># </span>
+<span class="s0"># policy0 = Policy(&quot;Policy 0&quot;, **pol0)</span>
+<span class="s0">#%% 
+</span><span class="s1">dele </span><span class="s3">= []</span>
+<span class="s2">for </span><span class="s1">x </span><span class="s2">in </span><span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">uncertainties</span><span class="s3">:</span>
+    <span class="s2">if </span><span class="s1">x</span><span class="s3">.</span><span class="s1">name </span><span class="s2">not in </span><span class="s3">[</span><span class="s4">&quot;A.1_pfail&quot;</span><span class="s3">,</span><span class="s4">&quot;A.2_pfail&quot;</span><span class="s3">,</span><span class="s4">&quot;A.3_pfail&quot;</span><span class="s3">,</span><span class="s4">&quot;A.4_pfail&quot;</span><span class="s3">,</span><span class="s4">&quot;A.5_pfail&quot;</span><span class="s3">, </span><span class="s4">&quot;A.0_ID flood wave shape&quot;</span><span class="s3">]:</span>
+        <span class="s1">dele</span><span class="s3">.</span><span class="s1">append</span><span class="s3">(</span><span class="s1">x</span><span class="s3">.</span><span class="s1">name</span><span class="s3">)</span>
+<span class="s2">for </span><span class="s1">i </span><span class="s2">in </span><span class="s1">dele</span><span class="s3">:</span>
+    <span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">uncertainties</span><span class="s3">.</span><span class="s1">__delitem__</span><span class="s3">(</span><span class="s1">i</span><span class="s3">)</span>
+
+
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">&quot;discount rate 0&quot;</span><span class="s3">,</span><span class="s5">2.5</span><span class="s3">))</span>
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">&quot;discount rate 1&quot;</span><span class="s3">,</span><span class="s5">2.5</span><span class="s3">))</span>
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">&quot;discount rate 2&quot;</span><span class="s3">,</span><span class="s5">2.5</span><span class="s3">))</span>
+
+<span class="s0"># dike_model_1.constants.extend(Constant('A.0_ID flood wave shape',17))</span>
+
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.1_Bmax'</span><span class="s3">,</span><span class="s5">190</span><span class="s3">))</span>
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.1_Brate'</span><span class="s3">,</span><span class="s5">1.5</span><span class="s3">))</span>
+
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.2_Bmax'</span><span class="s3">,</span><span class="s5">190</span><span class="s3">))</span>
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.2_Brate'</span><span class="s3">,</span><span class="s5">1.5</span><span class="s3">))</span>
+
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.3_Bmax'</span><span class="s3">,</span><span class="s5">190</span><span class="s3">))</span>
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.3_Brate'</span><span class="s3">,</span><span class="s5">1.5</span><span class="s3">))</span>
+
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.4_Bmax'</span><span class="s3">,</span><span class="s5">190</span><span class="s3">))</span>
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.4_Brate'</span><span class="s3">,</span><span class="s5">1.5</span><span class="s3">))</span>
+
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.5_Bmax'</span><span class="s3">,</span><span class="s5">190</span><span class="s3">))</span>
+<span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">constants</span><span class="s3">.</span><span class="s1">extend</span><span class="s3">(</span><span class="s1">Constant</span><span class="s3">(</span><span class="s4">'A.5_Brate'</span><span class="s3">,</span><span class="s5">1.5</span><span class="s3">))</span>
+
+<span class="s0">#%% 
+</span><span class="s2">with </span><span class="s1">MultiprocessingEvaluator</span><span class="s3">(</span><span class="s1">dike_model_1</span><span class="s3">) </span><span class="s2">as </span><span class="s1">evaluator</span><span class="s3">:</span>
+    <span class="s1">results </span><span class="s3">= </span><span class="s1">evaluator</span><span class="s3">.</span><span class="s1">perform_experiments</span><span class="s3">(</span><span class="s1">scenarios</span><span class="s3">=</span><span class="s5">250</span><span class="s3">,</span><span class="s1">policies</span><span class="s3">=</span><span class="s5">10</span><span class="s3">,</span><span class="s1">uncertainty_sampling</span><span class="s3">=</span><span class="s1">Samplers</span><span class="s3">.</span><span class="s1">SOBOL</span><span class="s3">)</span>
+
+<span class="s1">experiments</span><span class="s3">, </span><span class="s1">outcomes </span><span class="s3">= </span><span class="s1">results</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Preprocess data samples SOBOL 
+</span><span class="s0">#%% 
+</span><span class="s1">experiments_unc </span><span class="s3">=</span><span class="s1">experiments</span><span class="s3">.</span><span class="s1">iloc</span><span class="s3">[:,</span><span class="s5">0</span><span class="s3">:</span><span class="s5">5</span><span class="s3">]</span>
+<span class="s0">#%% 
+</span><span class="s1">df </span><span class="s3">=</span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">outcomes</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.1_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.2_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span>
+    <span class="s4">&quot;A.3_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.4_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">]</span>
+<span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.1_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.2_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.3_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.4_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Annual Damage&quot;</span><span class="s3">]</span>
+
+<span class="s1">outcomes</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">]</span>
+<span class="s1">outcomes</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">]</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Feature importance (not required but nice to know) 
+</span><span class="s0">#%% 
+</span><span class="s1">df_feature_importance_out </span><span class="s3">= </span><span class="s1">df</span><span class="s3">[[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">, </span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">,</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">,</span><span class="s4">&quot;A.5_Expected Annual Damage&quot;</span><span class="s3">,</span><span class="s4">&quot;Expected Evacuation Costs&quot;</span><span class="s3">]]</span>
+
+<span class="s1">x </span><span class="s3">= </span><span class="s1">experiments_unc</span>
+<span class="s1">y </span><span class="s3">= </span><span class="s1">df_feature_importance_out</span>
+
+<span class="s1">fs </span><span class="s3">= </span><span class="s1">feature_scoring</span><span class="s3">.</span><span class="s1">get_feature_scores_all</span><span class="s3">(</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">)</span>
+<span class="s1">sns</span><span class="s3">.</span><span class="s1">heatmap</span><span class="s3">(</span><span class="s1">fs</span><span class="s3">, </span><span class="s1">cmap</span><span class="s3">=</span><span class="s4">&quot;viridis&quot;</span><span class="s3">, </span><span class="s1">annot</span><span class="s3">=</span><span class="s2">True</span><span class="s3">, </span><span class="s1">vmax</span><span class="s3">=</span><span class="s5">0.2</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">df_feature_importance_out</span><span class="s3">.</span><span class="s1">to_csv</span><span class="s3">(</span><span class="s4">'data\OpenScenRes.csv'</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">## SOBOL analysis  
+</span><span class="s0">#%% 
+</span><span class="s1">problem </span><span class="s3">= </span><span class="s1">get_SALib_problem</span><span class="s3">(</span><span class="s1">dike_model_1</span><span class="s3">.</span><span class="s1">uncertainties</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s1">sns</span><span class="s3">.</span><span class="s1">set_style</span><span class="s3">(</span><span class="s4">'white'</span><span class="s3">)</span>
+<span class="s1">fig</span><span class="s3">, </span><span class="s1">ax </span><span class="s3">= </span><span class="s1">plt</span><span class="s3">.</span><span class="s1">subplots</span><span class="s3">(</span><span class="s5">3</span><span class="s3">,</span><span class="s5">2</span><span class="s3">,</span><span class="s1">figsize</span><span class="s3">=(</span><span class="s5">10</span><span class="s3">,</span><span class="s5">10</span><span class="s3">))</span>
+<span class="s1">ax </span><span class="s3">= </span><span class="s1">ax</span><span class="s3">.</span><span class="s1">flatten</span><span class="s3">()</span>
+
+<span class="s2">for </span><span class="s1">index</span><span class="s3">,</span><span class="s1">kpi </span><span class="s2">in </span><span class="s1">enumerate</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">):</span>
+    <span class="s1">Si </span><span class="s3">= </span><span class="s1">sobol</span><span class="s3">.</span><span class="s1">analyze</span><span class="s3">(</span><span class="s1">problem</span><span class="s3">,</span><span class="s1">np</span><span class="s3">.</span><span class="s1">array</span><span class="s3">(</span><span class="s1">outcomes</span><span class="s3">[</span><span class="s1">kpi</span><span class="s3">]), </span><span class="s1">calc_second_order</span><span class="s3">=</span><span class="s2">True</span><span class="s3">, </span><span class="s1">print_to_console</span><span class="s3">=</span><span class="s2">False</span><span class="s3">)</span>
+    <span class="s1">Si_filter </span><span class="s3">= {</span><span class="s1">k</span><span class="s3">:</span><span class="s1">Si</span><span class="s3">[</span><span class="s1">k</span><span class="s3">] </span><span class="s2">for </span><span class="s1">k </span><span class="s2">in </span><span class="s3">[</span><span class="s4">'ST'</span><span class="s3">,</span><span class="s4">'ST_conf'</span><span class="s3">,</span><span class="s4">'S1'</span><span class="s3">,</span><span class="s4">'S1_conf'</span><span class="s3">]}</span>
+    <span class="s1">Si_df </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">Si_filter</span><span class="s3">, </span><span class="s1">index</span><span class="s3">=</span><span class="s1">problem</span><span class="s3">[</span><span class="s4">'names'</span><span class="s3">])</span>
+    
+    
+    
+    <span class="s1">indices </span><span class="s3">= </span><span class="s1">Si_df</span><span class="s3">[[</span><span class="s4">'S1'</span><span class="s3">,</span><span class="s4">'ST'</span><span class="s3">]]</span>
+    <span class="s1">err </span><span class="s3">= </span><span class="s1">Si_df</span><span class="s3">[[</span><span class="s4">'S1_conf'</span><span class="s3">,</span><span class="s4">'ST_conf'</span><span class="s3">]]</span>
+    <span class="s1">ax</span><span class="s3">[</span><span class="s1">index</span><span class="s3">].</span><span class="s1">title</span><span class="s3">.</span><span class="s1">set_text</span><span class="s3">(</span><span class="s1">kpi</span><span class="s3">) </span>
+    <span class="s1">indices</span><span class="s3">.</span><span class="s1">plot</span><span class="s3">.</span><span class="s1">bar</span><span class="s3">(</span><span class="s1">yerr</span><span class="s3">=</span><span class="s1">err</span><span class="s3">.</span><span class="s1">values</span><span class="s3">.</span><span class="s1">T</span><span class="s3">,</span><span class="s1">ax</span><span class="s3">=</span><span class="s1">ax</span><span class="s3">[</span><span class="s1">index</span><span class="s3">])</span>
+    <span class="s0"># fig.set_size_inches(8,6)</span>
+    <span class="s0"># fig.subplots_adjust(bottom=0.3)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">tight_layout</span><span class="s3">()</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">total_Si</span><span class="s3">, </span><span class="s1">first_Si</span><span class="s3">, </span><span class="s1">second_Si </span><span class="s3">= </span><span class="s1">Si</span><span class="s3">.</span><span class="s1">to_df</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">second_Si</span>
+
+<span class="s0">#%% md 
+</span><span class="s1">## PRIM analyses  
+</span><span class="s0">#%% md 
+</span><span class="s1">### PRIM for A.5 outcomes 
+</span><span class="s0">#%% 
+</span><span class="s1">df </span><span class="s3">=</span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">outcomes</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.1_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.2_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span>
+    <span class="s4">&quot;A.3_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.4_Expected Number of Deaths&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">]</span>
+<span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.1_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.2_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span>
+    <span class="s4">&quot;A.3_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.4_Expected Annual Damage&quot;</span><span class="s3">] + </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Annual Damage&quot;</span><span class="s3">]</span>
+
+<span class="s1">outcomes</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">]</span>
+<span class="s1">outcomes</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">] = </span><span class="s1">df</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">]</span>
+<span class="s0">## Feature importance (not required but nice to know)</span>
+<span class="s1">df_feature_importance_out </span><span class="s3">= </span><span class="s1">df</span><span class="s3">[[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">, </span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">, </span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">,</span>
+                                <span class="s4">&quot;A.5_Expected Annual Damage&quot;</span><span class="s3">]]</span>
+
+<span class="s0">#%% 
+</span>
+
+<span class="s1">y </span><span class="s3">= ((</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">]))[</span><span class="s1">np</span><span class="s3">.</span><span class="s1">int64</span><span class="s3">(</span><span class="s5">0.80</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;A.5_Expected Number of Deaths&quot;</span><span class="s3">]))])</span>
+    <span class="s3">|(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'A.5_Expected Annual Damage'</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'A.5_Expected Annual Damage'</span><span class="s3">]))[</span><span class="s1">np</span><span class="s3">.</span><span class="s1">int64</span><span class="s3">(</span><span class="s5">0.8</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'A.5_Expected Annual Damage'</span><span class="s3">]))])</span>
+     <span class="s3">)</span>
+
+<span class="s1">prim_alg </span><span class="s3">= </span><span class="s1">prim</span><span class="s3">.</span><span class="s1">Prim</span><span class="s3">(</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">threshold</span><span class="s3">=</span><span class="s5">0.8</span><span class="s3">)</span>
+<span class="s1">box1 </span><span class="s3">= </span><span class="s1">prim_alg</span><span class="s3">.</span><span class="s1">find_box</span><span class="s3">()</span>
+<span class="s1">box1</span><span class="s3">.</span><span class="s1">show_tradeoff</span><span class="s3">(</span><span class="s1">annotated</span><span class="s3">=</span><span class="s2">True</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">).</span><span class="s1">to_csv</span><span class="s3">(</span><span class="s4">'data\pdf_feature_importance_out.csv'</span><span class="s3">)</span>
+<span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">experiments_unc1</span><span class="s3">).</span><span class="s1">to_csv</span><span class="s3">(</span><span class="s4">'data\pexperiments_unc1.csv'</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s1">box1</span><span class="s3">.</span><span class="s1">select</span><span class="s3">(</span><span class="s5">5</span><span class="s3">)</span>
+<span class="s1">box1</span><span class="s3">.</span><span class="s1">show_pairs_scatter</span><span class="s3">()</span>
+<span class="s1">fig </span><span class="s3">= </span><span class="s1">plt</span><span class="s3">.</span><span class="s1">gcf</span><span class="s3">()</span>
+<span class="s1">fig</span><span class="s3">.</span><span class="s1">set_size_inches</span><span class="s3">(</span><span class="s5">12</span><span class="s3">,</span><span class="s5">12</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">box1</span><span class="s3">.</span><span class="s1">inspect</span><span class="s3">(</span><span class="s5">5</span><span class="s3">)</span>
+<span class="s1">box1</span><span class="s3">.</span><span class="s1">inspect</span><span class="s3">(</span><span class="s5">5</span><span class="s3">, </span><span class="s1">style</span><span class="s3">=</span><span class="s4">&quot;graph&quot;</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()  </span>
+<span class="s0">#%% 
+</span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">box1</span><span class="s3">.</span><span class="s1">inspect</span><span class="s3">(</span><span class="s5">0</span><span class="s3">, </span><span class="s1">style</span><span class="s3">=</span><span class="s4">'data'</span><span class="s3">)[</span><span class="s5">0</span><span class="s3">][</span><span class="s5">1</span><span class="s3">]).</span><span class="s1">to_csv</span><span class="s3">(</span><span class="s4">'data\para_space_A5.csv'</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### PRIM for general outcomes  
+</span><span class="s0">#%% 
+</span><span class="s1">y </span><span class="s3">= ((</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'Expected Number of Deaths'</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;Expected Number of Deaths&quot;</span><span class="s3">]))[</span><span class="s1">int</span><span class="s3">(</span><span class="s5">0.95</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'Expected Number of Deaths'</span><span class="s3">]))])</span>
+     <span class="s3">|(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'Expected Annual Damage'</span><span class="s3">] &gt; </span><span class="s1">list</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">sort</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">&quot;Expected Annual Damage&quot;</span><span class="s3">]))[</span><span class="s1">int</span><span class="s3">(</span><span class="s5">0.95</span><span class="s3">* </span><span class="s1">len</span><span class="s3">(</span><span class="s1">df_feature_importance_out</span><span class="s3">[</span><span class="s4">'Expected Annual Damage'</span><span class="s3">]))])</span>
+     <span class="s3">)</span>
+<span class="s0"># (df_feature_importance_out[&quot;Total Costs&quot;] &gt;= list(np.sort(df_feature_importance_out[&quot;Total Costs&quot;]))[int(0.80* len(df_feature_importance_out[&quot;Total Costs&quot;]))]) </span>
+<span class="s0">#      |</span>
+<span class="s1">prim_alg </span><span class="s3">= </span><span class="s1">prim</span><span class="s3">.</span><span class="s1">Prim</span><span class="s3">(</span><span class="s1">x</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">threshold</span><span class="s3">=</span><span class="s5">0.5</span><span class="s3">)</span>
+<span class="s1">box2 </span><span class="s3">= </span><span class="s1">prim_alg</span><span class="s3">.</span><span class="s1">find_box</span><span class="s3">()</span>
+<span class="s1">box2</span><span class="s3">.</span><span class="s1">show_tradeoff</span><span class="s3">(</span><span class="s1">annotated</span><span class="s3">=</span><span class="s2">True</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">box2</span><span class="s3">.</span><span class="s1">select</span><span class="s3">(</span><span class="s5">13</span><span class="s3">)</span>
+<span class="s1">box2</span><span class="s3">.</span><span class="s1">show_pairs_scatter</span><span class="s3">()</span>
+<span class="s1">fig </span><span class="s3">= </span><span class="s1">plt</span><span class="s3">.</span><span class="s1">gcf</span><span class="s3">()</span>
+<span class="s1">fig</span><span class="s3">.</span><span class="s1">set_size_inches</span><span class="s3">(</span><span class="s5">12</span><span class="s3">,</span><span class="s5">12</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">box2</span><span class="s3">.</span><span class="s1">inspect</span><span class="s3">(</span><span class="s5">13</span><span class="s3">)</span>
+<span class="s1">box2</span><span class="s3">.</span><span class="s1">inspect</span><span class="s3">(</span><span class="s5">13</span><span class="s3">, </span><span class="s1">style</span><span class="s3">=</span><span class="s4">&quot;graph&quot;</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">box2</span><span class="s3">.</span><span class="s1">inspect</span><span class="s3">(</span><span class="s5">13</span><span class="s3">, </span><span class="s1">style</span><span class="s3">=</span><span class="s4">'data'</span><span class="s3">)[</span><span class="s5">0</span><span class="s3">][</span><span class="s5">1</span><span class="s3">]).</span><span class="s1">to_csv</span><span class="s3">(</span><span class="s4">'data\para_space_all.csv'</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### Selection reference scenarios 
+</span><span class="s0">#%% 
+</span><span class="s2">from </span><span class="s1">Convience_fun </span><span class="s2">import </span><span class="s1">create_scenario</span>
+<span class="s0">#%% 
+</span><span class="s2">import </span><span class="s1">multirange </span><span class="s2">as </span><span class="s1">mr</span>
+
+<span class="s1">df_param_space_A5 </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">read_csv</span><span class="s3">(</span><span class="s4">'data/para_space_A5.csv'</span><span class="s3">).</span><span class="s1">drop</span><span class="s3">(</span><span class="s5">0</span><span class="s3">).</span><span class="s1">rename</span><span class="s3">(</span><span class="s1">columns</span><span class="s3">={</span><span class="s4">&quot;Unnamed: 0&quot;</span><span class="s3">: </span><span class="s4">&quot;Variable&quot;</span><span class="s3">})</span>
+<span class="s1">df_param_space_all </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">read_csv</span><span class="s3">(</span><span class="s4">'data/para_space_all.csv'</span><span class="s3">).</span><span class="s1">drop</span><span class="s3">(</span><span class="s5">0</span><span class="s3">).</span><span class="s1">rename</span><span class="s3">(</span><span class="s1">columns</span><span class="s3">={</span><span class="s4">&quot;Unnamed: 0&quot;</span><span class="s3">: </span><span class="s4">&quot;Variable&quot;</span><span class="s3">})</span>
+
+<span class="s1">dike_model</span><span class="s3">, </span><span class="s1">planning_steps </span><span class="s3">= </span><span class="s1">get_model_for_problem_formulation</span><span class="s3">(</span><span class="s5">3</span><span class="s3">)</span>
+
+
+<span class="s2">def </span><span class="s1">create_scenario_from_box</span><span class="s3">(</span><span class="s1">all</span><span class="s3">, </span><span class="s1">a5</span><span class="s3">):</span>
+    <span class="s1">para_list </span><span class="s3">= []</span>
+    <span class="s2">for </span><span class="s1">uncertainty </span><span class="s2">in </span><span class="s1">dike_model</span><span class="s3">.</span><span class="s1">uncertainties</span><span class="s3">:</span>
+        <span class="s0"># print((variable in df_param_space_A5.Variable))</span>
+        <span class="s1">variable </span><span class="s3">= </span><span class="s1">uncertainty</span><span class="s3">.</span><span class="s1">name</span>
+        <span class="s0"># print(variable)</span>
+        <span class="s2">if </span><span class="s3">(</span><span class="s1">variable </span><span class="s2">in </span><span class="s1">list</span><span class="s3">(</span><span class="s1">df_param_space_A5</span><span class="s3">.</span><span class="s1">Variable</span><span class="s3">)) &amp; (</span><span class="s1">variable </span><span class="s2">in </span><span class="s1">list</span><span class="s3">(</span><span class="s1">df_param_space_all</span><span class="s3">.</span><span class="s1">Variable</span><span class="s3">)) &amp; (</span>
+                <span class="s1">all </span><span class="s3">+ </span><span class="s1">a5 </span><span class="s3">== </span><span class="s5">2</span><span class="s3">):</span>
+            <span class="s1">min_1 </span><span class="s3">= </span><span class="s1">float</span><span class="s3">(</span>
+                <span class="s1">df_param_space_A5</span><span class="s3">[</span><span class="s1">df_param_space_A5</span><span class="s3">[</span><span class="s4">'Variable'</span><span class="s3">] == </span><span class="s1">variable</span><span class="s3">][</span><span class="s1">df_param_space_A5</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">[</span><span class="s5">1</span><span class="s3">]].</span><span class="s1">values</span><span class="s3">[</span>
+                    <span class="s5">0</span><span class="s3">]) * </span><span class="s5">10000</span>
+            <span class="s1">max_1 </span><span class="s3">= </span><span class="s1">float</span><span class="s3">(</span>
+                <span class="s1">df_param_space_A5</span><span class="s3">[</span><span class="s1">df_param_space_A5</span><span class="s3">[</span><span class="s4">'Variable'</span><span class="s3">] == </span><span class="s1">variable</span><span class="s3">][</span><span class="s1">df_param_space_A5</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">[</span><span class="s5">2</span><span class="s3">]].</span><span class="s1">values</span><span class="s3">[</span>
+                    <span class="s5">0</span><span class="s3">]) * </span><span class="s5">10000</span>
+
+            <span class="s1">min_2 </span><span class="s3">= </span><span class="s1">float</span><span class="s3">(</span>
+                <span class="s1">df_param_space_all</span><span class="s3">[</span><span class="s1">df_param_space_all</span><span class="s3">[</span><span class="s4">'Variable'</span><span class="s3">] == </span><span class="s1">variable</span><span class="s3">][</span><span class="s1">df_param_space_all</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">[</span><span class="s5">1</span><span class="s3">]].</span><span class="s1">values</span><span class="s3">[</span>
+                    <span class="s5">0</span><span class="s3">]) * </span><span class="s5">10000</span>
+            <span class="s1">max_2 </span><span class="s3">= </span><span class="s1">float</span><span class="s3">(</span>
+                <span class="s1">df_param_space_all</span><span class="s3">[</span><span class="s1">df_param_space_all</span><span class="s3">[</span><span class="s4">'Variable'</span><span class="s3">] == </span><span class="s1">variable</span><span class="s3">][</span><span class="s1">df_param_space_all</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">[</span><span class="s5">2</span><span class="s3">]].</span><span class="s1">values</span><span class="s3">[</span>
+                    <span class="s5">0</span><span class="s3">]) * </span><span class="s5">10000</span>
+
+            <span class="s1">boundaries </span><span class="s3">= </span><span class="s1">mr</span><span class="s3">.</span><span class="s1">overlap</span><span class="s3">(</span><span class="s1">range</span><span class="s3">(</span><span class="s1">int</span><span class="s3">(</span><span class="s1">min_1</span><span class="s3">), </span><span class="s1">int</span><span class="s3">(</span><span class="s1">max_1</span><span class="s3">)), </span><span class="s1">range</span><span class="s3">(</span><span class="s1">int</span><span class="s3">(</span><span class="s1">min_2</span><span class="s3">), </span><span class="s1">int</span><span class="s3">(</span><span class="s1">max_2</span><span class="s3">)))</span>
+            <span class="s1">para_list</span><span class="s3">.</span><span class="s1">append</span><span class="s3">((</span><span class="s1">boundaries</span><span class="s3">.</span><span class="s1">start </span><span class="s3">+ (</span><span class="s1">boundaries</span><span class="s3">.</span><span class="s1">stop </span><span class="s3">- </span><span class="s1">boundaries</span><span class="s3">.</span><span class="s1">start</span><span class="s3">) / </span><span class="s5">2</span><span class="s3">) / </span><span class="s5">10000</span><span class="s3">)</span>
+            <span class="s1">print</span><span class="s3">((</span><span class="s1">boundaries</span><span class="s3">.</span><span class="s1">start </span><span class="s3">+ (</span><span class="s1">boundaries</span><span class="s3">.</span><span class="s1">stop </span><span class="s3">- </span><span class="s1">boundaries</span><span class="s3">.</span><span class="s1">start</span><span class="s3">) / </span><span class="s5">2</span><span class="s3">) / </span><span class="s5">10000</span><span class="s3">)</span>
+        <span class="s2">elif </span><span class="s3">(</span><span class="s1">variable </span><span class="s2">in </span><span class="s1">list</span><span class="s3">(</span><span class="s1">df_param_space_A5</span><span class="s3">.</span><span class="s1">Variable</span><span class="s3">)) &amp; (</span><span class="s1">a5 </span><span class="s3">== </span><span class="s2">True</span><span class="s3">):</span>
+            <span class="s1">min_1 </span><span class="s3">= </span><span class="s1">float</span><span class="s3">(</span>
+                <span class="s1">df_param_space_A5</span><span class="s3">[</span><span class="s1">df_param_space_A5</span><span class="s3">[</span><span class="s4">'Variable'</span><span class="s3">] == </span><span class="s1">variable</span><span class="s3">][</span><span class="s1">df_param_space_A5</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">[</span><span class="s5">1</span><span class="s3">]].</span><span class="s1">values</span><span class="s3">[</span><span class="s5">0</span><span class="s3">])</span>
+            <span class="s1">max_1 </span><span class="s3">= </span><span class="s1">float</span><span class="s3">(</span>
+                <span class="s1">df_param_space_A5</span><span class="s3">[</span><span class="s1">df_param_space_A5</span><span class="s3">[</span><span class="s4">'Variable'</span><span class="s3">] == </span><span class="s1">variable</span><span class="s3">][</span><span class="s1">df_param_space_A5</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">[</span><span class="s5">2</span><span class="s3">]].</span><span class="s1">values</span><span class="s3">[</span><span class="s5">0</span><span class="s3">])</span>
+
+            <span class="s1">para_list</span><span class="s3">.</span><span class="s1">append</span><span class="s3">((</span><span class="s1">min_1 </span><span class="s3">+ (</span><span class="s1">max_1 </span><span class="s3">- </span><span class="s1">min_1</span><span class="s3">) / </span><span class="s5">2</span><span class="s3">))</span>
+        <span class="s2">elif </span><span class="s3">(</span><span class="s1">variable </span><span class="s2">in </span><span class="s1">list</span><span class="s3">(</span><span class="s1">df_param_space_all</span><span class="s3">.</span><span class="s1">Variable</span><span class="s3">)) &amp; (</span><span class="s1">all </span><span class="s3">== </span><span class="s2">True</span><span class="s3">):</span>
+            <span class="s1">min_2 </span><span class="s3">= </span><span class="s1">float</span><span class="s3">(</span>
+                <span class="s1">df_param_space_all</span><span class="s3">[</span><span class="s1">df_param_space_all</span><span class="s3">[</span><span class="s4">'Variable'</span><span class="s3">] == </span><span class="s1">variable</span><span class="s3">][</span><span class="s1">df_param_space_all</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">[</span><span class="s5">1</span><span class="s3">]].</span><span class="s1">values</span><span class="s3">[</span><span class="s5">0</span><span class="s3">])</span>
+            <span class="s1">max_2 </span><span class="s3">= </span><span class="s1">float</span><span class="s3">(</span>
+                <span class="s1">df_param_space_all</span><span class="s3">[</span><span class="s1">df_param_space_all</span><span class="s3">[</span><span class="s4">'Variable'</span><span class="s3">] == </span><span class="s1">variable</span><span class="s3">][</span><span class="s1">df_param_space_all</span><span class="s3">.</span><span class="s1">columns</span><span class="s3">[</span><span class="s5">2</span><span class="s3">]].</span><span class="s1">values</span><span class="s3">[</span><span class="s5">0</span><span class="s3">])</span>
+
+            <span class="s1">para_list</span><span class="s3">.</span><span class="s1">append</span><span class="s3">((</span><span class="s1">min_2 </span><span class="s3">+ (</span><span class="s1">max_2 </span><span class="s3">- </span><span class="s1">min_2</span><span class="s3">) / </span><span class="s5">2</span><span class="s3">))</span>
+        <span class="s2">elif </span><span class="s1">variable</span><span class="s3">.</span><span class="s1">startswith</span><span class="s3">(</span><span class="s4">&quot;d&quot;</span><span class="s3">):</span>
+            <span class="s1">para_list</span><span class="s3">.</span><span class="s1">append</span><span class="s3">(</span><span class="s5">3.5</span><span class="s3">)</span>
+        <span class="s2">elif </span><span class="s1">variable </span><span class="s3">== </span><span class="s4">&quot;A.0_ID flood wave shape&quot;</span><span class="s3">:</span>
+            <span class="s1">para_list</span><span class="s3">.</span><span class="s1">append</span><span class="s3">(</span><span class="s5">17</span><span class="s3">)</span>
+        <span class="s2">elif </span><span class="s1">variable</span><span class="s3">.</span><span class="s1">endswith</span><span class="s3">(</span><span class="s4">&quot;Brate&quot;</span><span class="s3">):</span>
+            <span class="s1">para_list</span><span class="s3">.</span><span class="s1">append</span><span class="s3">(</span><span class="s5">1.5</span><span class="s3">)</span>
+        <span class="s2">else</span><span class="s3">:</span>
+            <span class="s1">para_list</span><span class="s3">.</span><span class="s1">append</span><span class="s3">((</span><span class="s1">uncertainty</span><span class="s3">.</span><span class="s1">lower_bound </span><span class="s3">+ (</span><span class="s1">uncertainty</span><span class="s3">.</span><span class="s1">upper_bound </span><span class="s3">- </span><span class="s1">uncertainty</span><span class="s3">.</span><span class="s1">lower_bound</span><span class="s3">) / </span><span class="s5">2</span><span class="s3">))</span>
+
+    <span class="s2">return </span><span class="s1">create_scenario</span><span class="s3">(</span><span class="s1">para_list</span><span class="s3">)</span>
+
+
+<span class="s1">Scenarios_MOEA </span><span class="s3">= [</span><span class="s1">create_scenario_from_box</span><span class="s3">(</span><span class="s1">all</span><span class="s3">=</span><span class="s2">True</span><span class="s3">, </span><span class="s1">a5</span><span class="s3">=</span><span class="s2">True</span><span class="s3">), </span><span class="s1">create_scenario_from_box</span><span class="s3">(</span><span class="s1">all</span><span class="s3">=</span><span class="s2">True</span><span class="s3">, </span><span class="s1">a5</span><span class="s3">=</span><span class="s2">False</span><span class="s3">),</span>
+                  <span class="s1">create_scenario_from_box</span><span class="s3">(</span><span class="s1">all</span><span class="s3">=</span><span class="s2">False</span><span class="s3">, </span><span class="s1">a5</span><span class="s3">=</span><span class="s2">True</span><span class="s3">)]</span>
+<span class="s0">#%% 
+</span><span class="s2">import </span><span class="s1">pickle</span>
+<span class="s0">#%% 
+</span><span class="s2">with </span><span class="s1">open</span><span class="s3">(</span><span class="s4">&quot;data\ScenariosOpenExplo&quot;</span><span class="s3">, </span><span class="s4">'wb'</span><span class="s3">) </span><span class="s2">as </span><span class="s1">file</span><span class="s3">:</span>
+    <span class="s1">pickle</span><span class="s3">.</span><span class="s1">dump</span><span class="s3">(</span><span class="s1">Scenarios_MOEA</span><span class="s3">, </span><span class="s1">file</span><span class="s3">) </span>
+
+</pre>
+</body>
+</html>
