@@ -1,7 +1,7 @@
 
-# README Advanced Simulation
+# README Model-based Decision-making
 
-This README file was generated on: 18-03-2024
+This README file was generated on: 21-06-2024
 
 ### Authors:
 Created by: EPA141A - Model-based Decision-Making
@@ -64,8 +64,10 @@ Various Python files are included. Each has its purpose which will be briefly ex
 | Open_Exploration_Scen.ipynb | Contains the code for feature scoring and SOBOL to identify interesting scenarios                        |
 | Open_Exploration_Pol.ipynb  | Contains the code for feature scoring and SOBOL to identify interesting policies                         |
 | PRIM.ipynb                  | Uses result open exploration for scenarios to define an interesting parameter space                      |
+| PRIM (MORDM).ipynb          | Applies scenario discovery to the candidate solutions found in MOEA                                      |
 | DS.ipynb                    | Searches with reference scenarios of PRIM for effective policy combinations                              |
 | Convergence.ipynb           | Calculates the convergence metrics of the optimisation done on the DelftsBlauw computer and the DS.ipynb |
+| Boxplots.ipynb              | Creates boxplots from the results of direct search                                                       |
 | .py files                   | Files that make up the model.                                                                            |
 
 ### Usage
