@@ -7,7 +7,7 @@
           <value>
             <JupyterConnectionParameters>
               <option name="managed" value="true" />
-              <option name="sdkName" value="C:\Users\Ineke\anaconda3\envs\klaas\envs\PETERTJEEEE" />
+              <option name="sdkName" value="MD" />
             </JupyterConnectionParameters>
           </value>
         </entry>
