@@ -43,8 +43,9 @@ that is as follows:
 
     EPA141A-G4/
         ├── data/
-        ├── Archive/
+        ├── DB_results/
         ├── report/
+        ├── Results/
         ├── Open_Exploration_Scen.ipynb
         ├── Open_Exploration_Pol.ipynb
         ├── PRIM.ipynb
@@ -56,19 +57,22 @@ that is as follows:
 
 Various Python files are included. Each has its purpose which will be briefly explained in the table underneath.
 
-| File/folder                 | Purpose                                                                                                  |
-|:----------------------------|----------------------------------------------------------------------------------------------------------|
-| data                        | Contains the data used and created wit the open exploration for policies and scenarios                   |
-| Archive                     | Stores the data files from the directed search optimizer                                                 |
-| report                      | Stores the report for which the analyses was done                                                        |
-| Open_Exploration_Scen.ipynb | Contains the code for feature scoring and SOBOL to identify interesting scenarios                        |
-| Open_Exploration_Pol.ipynb  | Contains the code for feature scoring and SOBOL to identify interesting policies                         |
-| PRIM.ipynb                  | Uses result open exploration for scenarios to define an interesting parameter space                      |
-| PRIM (MORDM).ipynb          | Applies scenario discovery to the candidate solutions found in MOEA                                      |
-| DS.ipynb                    | Searches with reference scenarios of PRIM for effective policy combinations                              |
-| Convergence.ipynb           | Calculates the convergence metrics of the optimisation done on the DelftsBlauw computer and the DS.ipynb |
-| Boxplots.ipynb              | Creates boxplots from the results of direct search                                                       |
-| .py files                   | Files that make up the model.                                                                            |
+| File/folder                     | Purpose                                                                                                                              |
+|:--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| data                            | Contains the data used and created wit the open exploration for policies and scenarios                                               |
+| DB_results                      | Stores the data files from the directed search optimizer, which was run on Delft Blue                                                |
+| report                          | Stores the report for which the analyses was done                                                                                    |
+| Results                         | Stores the experiments and outcomes that were produced by PRIM, performing experiments for robustness metrics and the final policies |
+| Open_Exploration_Scen.ipynb     | Contains the code for feature scoring and SOBOL to identify interesting scenarios                                                    |
+| Open_Exploration_Pol.ipynb      | Contains the code for feature scoring and SOBOL to identify interesting policies                                                     |
+| PRIM.ipynb                      | Uses result open exploration for scenarios to define an interesting parameter space                                                  |
+| PRIM (MORDM).ipynb              | Applies scenario discovery to the candidate solutions found in MOEA                                                                  |
+| DS.ipynb                        | Searches with reference scenarios of PRIM for effective policy combinations                                                          |
+| Optimizer_and_convergence.ipynb | Calculates the convergence metrics of the optimisation done on the DelftsBlauw computer                                              |
+| Boxplots.ipynb                  | Creates boxplots from the results of direct search                                                                                   |
+| Robustness.ipynb                | Calculates robustness metrics for candidate strategies and selects final strategies                                                  |
+| .py files                       | Files that make up the model.                                                                                                        |
+
 
 ### Usage
 
