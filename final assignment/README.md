@@ -66,10 +66,10 @@ Various Python files are included. Each has its purpose which will be briefly ex
 | Open_Exploration_Scen.ipynb     | Contains the code for feature scoring and SOBOL to identify interesting scenarios                                                    |
 | Open_Exploration_Pol.ipynb      | Contains the code for feature scoring and SOBOL to identify interesting policies                                                     |
 | PRIM.ipynb                      | Uses result open exploration for scenarios to define an interesting parameter space                                                  |
-| PRIM (MORDM).ipynb              | Applies scenario discovery to the candidate solutions found in MOEA                                                                  |
+| PRIM (MORDM).ipynb              | Applies scenario discovery to the candidate solutions found with MOEA                                                                |
 | DS.ipynb                        | Searches with reference scenarios of PRIM for effective policy combinations                                                          |
 | Optimizer_and_convergence.ipynb | Calculates the convergence metrics of the optimisation done on the DelftsBlauw computer                                              |
-| Boxplots.ipynb                  | Creates boxplots from the results of direct search                                                                                   |
+| Boxplots.ipynb                  | Creates boxplots from the results of direct search and scenario discovery                                                            |
 | Robustness.ipynb                | Calculates robustness metrics for candidate strategies and selects final strategies                                                  |
 | .py files                       | Files that make up the model.                                                                                                        |
 
