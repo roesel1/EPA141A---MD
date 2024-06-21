@@ -38,7 +38,7 @@ The .py files that are included belong to the used model and will not be describ
 
 that is as follows:
 
-    EPA141A-G4/
+    final assignment/
         ├── data/
         ├── DB_files/
         ├── report/
